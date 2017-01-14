@@ -1,0 +1,57 @@
+%python
+# Title:       Zeppelin Script for display data
+# Create-Date: 31. Dezember 2016
+# Version:     1.0
+# Author:      Cyrill Durrer / Christoph Haene
+# Contact:     http://cyrilldurrer.com
+#              christoph.haene@gmail.com
+#
+# Task:        Read data for HBase Calc data to a python pandas
+#              Diyplay data
+#
+# Input:       HBase Table "BC_CalcData"
+#
+#################################################################################################################################
+
+######################################################################
+# Import Libaries
+######################################################################
+
+import happybase
+import logging
+import numpy as np
+import pandas as pd
+import struct
+import sys
+from datetime import datetime
+
+
+
+logger = logging.getLogger(__name__)
+
+######################################################################
+# Read data from Hbase and store it to a python pandas
+######################################################################
+
+def read_hbase(con, table_name):
+   table = con.table(table_name)
+   #row = table.scan(row_start='1480820800', row_stop='1471020800')
+   row = table.scan(row_start='1482451200', row_stop='148564800')
+   df = pd.DataFrame(columns=('Key', 'Twitter:BTC', 'Twitter:Messages', 'Twitter:Bitcoin'))
+   for key, data in row:
+      df1 = pd.DataFrame([data])
+      key = datetime.fromtimestamp(float(key))
+      df1.insert(0, 'Key', key)
+      frames = [df, df1]
+      df = pd.concat(frames)
+   return df
+
+connection = happybase.Connection('192.168.1.114')
+df = read_hbase(connection, "BC_CalcData")
+df = df.fillna(0)
+df['DateTime'] = df['Key'].apply(lambda x: datetime.fromtimestamp(x))
+
+#print(df)
+z.show(df)
+
+
